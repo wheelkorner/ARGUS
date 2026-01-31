@@ -37,12 +37,20 @@ Route::middleware(['auth'])->group(function () {
 
 // Admin
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+
+    // LISTAGEM (tela)
     Route::get('/usuarios', [App\Http\Controllers\Admin\AdminUsuarioController::class, 'index'])
         ->name('admin.usuarios.index');
 
+    // DATATABLE (AJAX) - IMPORTANTE ficar antes do /usuarios/{id}
+    Route::get('/usuarios/datatable', [App\Http\Controllers\Admin\AdminUsuarioController::class, 'datatable'])
+        ->name('admin.usuarios.datatable');
+
+    // SHOW
     Route::get('/usuarios/{id}', [App\Http\Controllers\Admin\AdminUsuarioController::class, 'show'])
         ->name('admin.usuarios.show');
 
+    // AÇÕES
     Route::patch('/usuarios/{id}/ativar', [App\Http\Controllers\Admin\AdminUsuarioController::class, 'ativar'])
         ->name('admin.usuarios.ativar');
 

@@ -3,7 +3,8 @@
 @section('title', 'Detalhes do Usuário')
 
 @section('content_header')
-    <h1>Detalhes do Usuário</h1>
+<div class="d-flex align-items-center justify-content-between">
+</div>
 @stop
 
 @section('content')

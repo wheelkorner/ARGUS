@@ -3,7 +3,8 @@
 @section('title', 'Editar Ficha')
 
 @section('content_header')
-<h1>Editar Ficha</h1>
+<div class="d-flex align-items-center justify-content-between">
+</div>
 @stop
 
 @section('content')

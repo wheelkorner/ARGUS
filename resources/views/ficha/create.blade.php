@@ -3,7 +3,8 @@
 @section('title', 'Preencher Ficha')
 
 @section('content_header')
-<h1>Preencher Ficha</h1>
+<div class="d-flex align-items-center justify-content-between">
+</div>
 @stop
 
 @section('content')

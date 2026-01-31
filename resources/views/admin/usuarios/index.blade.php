@@ -3,7 +3,8 @@
 @section('title', 'Usuários')
 
 @section('content_header')
-<h1>Usuários</h1>
+<div class="d-flex align-items-center justify-content-between">
+</div>
 @stop
 
 @section('content')
@@ -12,97 +13,175 @@
     <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
+@if(session('error'))
+    <div class="alert alert-danger">{{ session('error') }}</div>
+@endif
+
 <div class="card">
-    <div class="card-body">
+    <div class="card-header border-0">
+        <h3 class="card-title">Lista de Usuários</h3>
 
-        <form method="GET" action="{{ route('admin.usuarios.index') }}" class="mb-3">
-            <div class="row">
-                <div class="col-md-5 mb-2">
-                    <input type="text" name="q" class="form-control" value="{{ $q ?? '' }}"
-                        placeholder="Buscar por nome, email, whatsapp ou cidade">
-                </div>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool btn-sm" data-card-widget="collapse" title="Recolher">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+    </div>
 
-                <div class="col-md-3 mb-2">
-                    <select name="status" class="form-control">
-                        <option value="">-- Status (todos) --</option>
-                        <option value="pendente" {{ ($status ?? '') === 'pendente' ? 'selected' : '' }}>pendente</option>
-                        <option value="ativo" {{ ($status ?? '') === 'ativo' ? 'selected' : '' }}>ativo</option>
-                        <option value="bloqueado" {{ ($status ?? '') === 'bloqueado' ? 'selected' : '' }}>bloqueado
-                        </option>
-                    </select>
-                </div>
+    {{-- TOOLBAR (filtros + busca) --}}
+    <div class="card-body pb-0">
+        <div class="row align-items-end">
+            <div class="col-md-3 mb-2">
+                <label class="mb-1">Status</label>
+                <select id="filtro-status" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="ativo">ativo</option>
+                    <option value="pendente">pendente</option>
+                    <option value="bloqueado">bloqueado</option>
+                </select>
+            </div>
 
-                <div class="col-md-2 mb-2">
-                    <select name="role" class="form-control">
-                        <option value="">-- Perfil (todos) --</option>
-                        <option value="user" {{ ($role ?? '') === 'user' ? 'selected' : '' }}>user</option>
-                        <option value="admin" {{ ($role ?? '') === 'admin' ? 'selected' : '' }}>admin</option>
-                    </select>
-                </div>
+            <div class="col-md-3 mb-2">
+                <label class="mb-1">Role</label>
+                <select id="filtro-role" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="admin">admin</option>
+                    <option value="user">user</option>
+                </select>
+            </div>
 
-                <div class="col-md-2 mb-2">
-                    <button class="btn btn-primary btn-block" type="submit">
-                        Filtrar
-                    </button>
+            <div class="col-md-6 mb-2">
+                <label class="mb-1">Pesquisar</label>
+                <div class="input-group">
+                    <input id="filtro-busca" type="text" class="form-control"
+                        placeholder="Nome, email, whatsapp ou cidade">
+                    <div class="input-group-append">
+                        <button id="btn-buscar" class="btn btn-primary" type="button" title="Buscar">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button id="btn-limpar" class="btn btn-outline-secondary" type="button" title="Limpar filtros">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </form>
-
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="thead-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>WhatsApp</th>
-                        <th>Cidade</th>
-                        <th>Status</th>
-                        <th>Role</th>
-                        <th width="120">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($usuarios as $u)
-                        <tr>
-                            <td>{{ $u->id }}</td>
-                            <td>{{ $u->name }}</td>
-                            <td>{{ $u->email }}</td>
-                            <td>{{ $u->whatsapp }}</td>
-                            <td>{{ $u->cidade }}</td>
-                            <td>
-                                @if($u->status === 'ativo')
-                                    <span class="badge badge-success">ativo</span>
-                                @elseif($u->status === 'bloqueado')
-                                    <span class="badge badge-danger">bloqueado</span>
-                                @else
-                                    <span class="badge badge-warning">pendente</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($u->role === 'admin')
-                                    <span class="badge badge-info">admin</span>
-                                @else
-                                    <span class="badge badge-secondary">user</span>
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.usuarios.show', $u->id) }}" class="btn btn-sm btn-outline-primary">
-                                    Ver
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8">Nenhum usuário encontrado.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
         </div>
 
-        {{ $usuarios->links() }}
+        <hr class="mt-3 mb-0">
+    </div>
+
+    <div class="card-body pt-3">
+        <div class="table-responsive">
+            <table id="tabela-usuarios" class="table table-bordered table-hover table-striped w-100">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width: 70px;">#</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th style="width: 160px;">WhatsApp</th>
+                        <th style="width: 160px;">Cidade</th>
+                        <th style="width: 120px;">Status</th>
+                        <th style="width: 120px;">Role</th>
+                        <th class="text-right" style="width: 120px;">Ações</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 </div>
+@stop
 
+@section('css')
+{{-- DataTables Bootstrap 4 --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css">
+
+<style>
+    /* escondemos o filtro e o length padrão do DataTables (usamos toolbar custom) */
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_length {
+        display: none;
+    }
+
+    table.dataTable td,
+    table.dataTable th {
+        vertical-align: middle;
+    }
+
+    .table thead th {
+        white-space: nowrap;
+    }
+</style>
+@stop
+
+@section('js')
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+
+<script>
+    $(function () {
+
+        const table = $('#tabela-usuarios').DataTable({
+            processing: true,
+            serverSide: true,
+            autoWidth: false,
+            pageLength: 10,
+            order: [[0, 'desc']],
+
+            // layout sem Buttons
+            dom: 'rtip',
+
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/pt-BR.json"
+            },
+
+            ajax: {
+                url: "{{ route('admin.usuarios.datatable') }}",
+                data: function (d) {
+                    d.status = $('#filtro-status').val() || '';
+                    d.role = $('#filtro-role').val() || '';
+
+                    d.search = d.search || {};
+                    d.search.value = $('#filtro-busca').val() || '';
+                }
+            },
+
+            columns: [
+                { data: 'id', name: 'id' },
+                { data: 'name', name: 'name' },
+                { data: 'email', name: 'email' },
+                { data: 'whatsapp', name: 'whatsapp' },
+                { data: 'cidade', name: 'cidade' },
+                { data: 'status_badge', name: 'status', orderable: true, searchable: false },
+                { data: 'role_badge', name: 'role', orderable: true, searchable: false },
+                { data: 'acoes', orderable: false, searchable: false, className: 'text-right' },
+            ],
+        });
+
+        // filtros sem reload
+        $('#filtro-status, #filtro-role').on('change', function () {
+            table.ajax.reload();
+        });
+
+        function aplicarBusca() {
+            table.ajax.reload();
+        }
+
+        $('#btn-buscar').on('click', aplicarBusca);
+
+        $('#filtro-busca').on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                aplicarBusca();
+            }
+        });
+
+        $('#btn-limpar').on('click', function () {
+            $('#filtro-status').val('');
+            $('#filtro-role').val('');
+            $('#filtro-busca').val('');
+            table.ajax.reload();
+        });
+
+    });
+</script>
 @stop

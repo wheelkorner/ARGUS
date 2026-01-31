@@ -12,18 +12,128 @@ use Illuminate\Support\Str;
 class AdminUsuarioController extends Controller
 {
     /**
-     * Lista usuários
+     * Tela principal
      */
     public function index()
     {
-        $usuarios = User::orderBy('created_at', 'desc')->paginate(20);
-
-        return view('admin.usuarios.index', compact('usuarios'));
+        return view('admin.usuarios.index');
     }
 
     /**
-     * Exibe usuário + ficha
+     * Endpoint DataTables (server-side puro)
      */
+    public function datatable(Request $request)
+    {
+        $draw = (int) $request->input('draw', 1);
+        $start = (int) $request->input('start', 0);
+        $length = (int) $request->input('length', 10);
+
+        $search = $request->input('search.value');
+
+        $status = $request->input('status');
+        $role = $request->input('role');
+
+        $base = User::query()->select([
+            'id',
+            'name',
+            'email',
+            'whatsapp',
+            'cidade',
+            'status',
+            'role',
+            'created_at'
+        ]);
+
+        $recordsTotal = (clone $base)->count();
+
+        /* Filtros */
+        if ($status) {
+            $base->where('status', $status);
+        }
+
+        if ($role) {
+            $base->where('role', $role);
+        }
+
+        if ($search) {
+            $base->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('whatsapp', 'like', "%{$search}%")
+                    ->orWhere('cidade', 'like', "%{$search}%");
+            });
+        }
+
+        $recordsFiltered = (clone $base)->count();
+
+        /* Ordenação */
+        $cols = [
+            0 => 'id',
+            1 => 'name',
+            2 => 'email',
+            3 => 'whatsapp',
+            4 => 'cidade',
+            5 => 'status',
+            6 => 'role',
+        ];
+
+        $orderCol = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+
+        $orderBy = $cols[$orderCol] ?? 'id';
+
+        $base->orderBy($orderBy, $orderDir);
+
+        /* Paginação */
+        $rows = $base
+            ->skip($start)
+            ->take($length)
+            ->get();
+
+        /* Montagem */
+        $data = $rows->map(function ($u) {
+
+            $status = match ($u->status) {
+                'ativo' => '<span class="badge badge-success">ativo</span>',
+                'bloqueado' => '<span class="badge badge-danger">bloqueado</span>',
+                default => '<span class="badge badge-warning">pendente</span>',
+            };
+
+            $role = $u->role === 'admin'
+                ? '<span class="badge badge-info">admin</span>'
+                : '<span class="badge badge-secondary">user</span>';
+
+            $acoes = '
+                <a href="' . route('admin.usuarios.show', $u->id) . '"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-search"></i> Ver
+                </a>
+            ';
+
+            return [
+                'id' => $u->id,
+                'name' => e($u->name),
+                'email' => e($u->email),
+                'whatsapp' => e($u->whatsapp),
+                'cidade' => e($u->cidade),
+                'status_badge' => $status,
+                'role_badge' => $role,
+                'acoes' => $acoes,
+            ];
+        });
+
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
+    }
+
+    /* ============================
+       RESTO DO SEU CONTROLLER
+       ============================ */
+
     public function show($id)
     {
         $usuario = User::findOrFail($id);
@@ -33,9 +143,6 @@ class AdminUsuarioController extends Controller
         return view('admin.usuarios.show', compact('usuario', 'ficha'));
     }
 
-    /**
-     * Ativar usuário
-     */
     public function ativar($id)
     {
         $usuario = User::findOrFail($id);
@@ -43,24 +150,18 @@ class AdminUsuarioController extends Controller
         $usuario->status = 'ativo';
         $usuario->save();
 
-        // Só seta ativado_em se a ficha existir (não cria ficha vazia!)
         $ficha = UserFicha::where('user_id', $usuario->id)->first();
+
         if ($ficha && !$ficha->ativado_em) {
             $ficha->ativado_em = now();
             $ficha->save();
         }
 
-        // FORÇA logout em qualquer dispositivo (sessions + remember me)
         $this->forceLogoutUser($usuario);
 
-        return redirect()
-            ->back()
-            ->with('success', 'Usuário ativado e desconectado (sessões reiniciadas).');
+        return back()->with('success', 'Usuário ativado.');
     }
 
-    /**
-     * Bloquear usuário
-     */
     public function bloquear($id)
     {
         $usuario = User::findOrFail($id);
@@ -68,30 +169,19 @@ class AdminUsuarioController extends Controller
         $usuario->status = 'bloqueado';
         $usuario->save();
 
-        // FORÇA logout em qualquer dispositivo (sessions + remember me)
         $this->forceLogoutUser($usuario);
 
-        return redirect()
-            ->back()
-            ->with('success', 'Usuário bloqueado e desconectado.');
+        return back()->with('success', 'Usuário bloqueado.');
     }
 
-    /**
-     * Atualiza instruções e validações
-     */
     public function instrucoes(Request $request, $id)
     {
         $usuario = User::findOrFail($id);
 
-        // Aqui o Admin PODE criar ficha (mas tem que preencher nome_monitorado se for obrigatório no banco)
-        // Então: NÃO criar ficha automaticamente aqui se sua tabela exige nome_monitorado.
-        // Se você quiser permitir que admin crie ficha, precisa ajustar migration pra permitir null/default.
         $ficha = UserFicha::where('user_id', $usuario->id)->first();
 
         if (!$ficha) {
-            return redirect()
-                ->back()
-                ->with('error', 'Este usuário ainda não possui ficha. Peça para ele preencher primeiro.');
+            return back()->with('error', 'Usuário sem ficha.');
         }
 
         $request->validate([
@@ -99,29 +189,22 @@ class AdminUsuarioController extends Controller
             'limite_ativacao' => 'nullable|date',
         ]);
 
-        $ficha->instrucoes = $request->instrucoes;
-        $ficha->limite_ativacao = $request->limite_ativacao;
+        $ficha->fill([
+            'instrucoes' => $request->instrucoes,
+            'limite_ativacao' => $request->limite_ativacao,
+            'info_verificada' => $request->has('info_verificada'),
+            'documentos_ok' => $request->has('documentos_ok'),
+        ])->save();
 
-        $ficha->info_verificada = $request->has('info_verificada');
-        $ficha->documentos_ok = $request->has('documentos_ok');
-
-        $ficha->save();
-
-        return redirect()
-            ->back()
-            ->with('success', 'Ficha atualizada.');
+        return back()->with('success', 'Ficha atualizada.');
     }
 
-    /**
-     * FORÇA logout do usuário em qualquer dispositivo:
-     * - apaga sessions do driver "database"
-     * - invalida "remember me" trocando remember_token
-     */
     private function forceLogoutUser(User $usuario): void
     {
-        DB::table('sessions')->where('user_id', $usuario->id)->delete();
+        DB::table('sessions')
+            ->where('user_id', $usuario->id)
+            ->delete();
 
-        // Invalida cookie "lembrar de mim"
         $usuario->setRememberToken(Str::random(60));
         $usuario->save();
     }
