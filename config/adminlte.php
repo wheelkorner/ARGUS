@@ -128,6 +128,7 @@ return [
             'text' => 'PIX (QR Code)',
             'url' => 'pix',
             'icon' => 'fas fa-qrcode',
+            'can' => 'argus-bloqueado',
         ],
 
         // A partir daqui: só se NÃO estiver bloqueado
@@ -142,14 +143,14 @@ return [
             'text' => 'Minha Ficha',
             'url' => 'ficha',
             'icon' => 'fas fa-fw fa-id-card',
-            'can' => ['argus-user', 'argus-nao-bloqueado'],
+            'can' => 'argus-nao-bloqueado',
         ],
 
         [
             'text' => 'Usuários',
             'url' => 'admin/usuarios',
             'icon' => 'fas fa-fw fa-users',
-            'can' => ['argus-admin', 'argus-nao-bloqueado'],
+            'can' => 'argus-admin',
         ],
 
         ['header' => 'CONTA'],

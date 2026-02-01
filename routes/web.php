@@ -35,6 +35,18 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/area', function () {
         return view('area.index');
     })->name('area.index');
+
+    // Perfil
+    Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil.show');
+    Route::patch('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
+    Route::patch('/perfil/senha', [PerfilController::class, 'updatePassword'])->name('perfil.password');
+
+    // Ficha
+    Route::get('/ficha/create', [FichaController::class, 'create'])->name('ficha.create');
+    Route::get('/ficha', [FichaController::class, 'show'])->name('ficha.show');
+    Route::get('/ficha/editar', [FichaController::class, 'edit'])->name('ficha.edit');
+    Route::post('/ficha', [FichaController::class, 'store'])->name('ficha.store');
+
 });
 
 // Rotas do usuário logado
@@ -54,16 +66,6 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('api.server.time');
 
-    // Ficha
-    Route::get('/ficha/create', [FichaController::class, 'create'])->name('ficha.create');
-    Route::get('/ficha', [FichaController::class, 'show'])->name('ficha.show');
-    Route::get('/ficha/editar', [FichaController::class, 'edit'])->name('ficha.edit');
-    Route::post('/ficha', [FichaController::class, 'store'])->name('ficha.store');
-
-    // Perfil
-    Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil.show');
-    Route::patch('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
-    Route::patch('/perfil/senha', [PerfilController::class, 'updatePassword'])->name('perfil.password');
 });
 
 // Admin
