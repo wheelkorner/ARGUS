@@ -82,8 +82,35 @@
                 <hr>
 
                 <small class="text-muted">
-                    Valor e destinatário são definidos pelo seu banco conforme o payload PIX.
+                    Encaminhe o comprovante de pagamento com a referencia do email ou whatssap do seu cadastro para
+                    ativação.
                 </small>
+
+                @php
+                    // Número do WhatsApp (SEM +, SEM espaço)
+                    $whatsapp = '5545991419631';
+
+                    // Mensagem automática
+                    $mensagem = urlencode(
+                        "Olá, já realizei o pagamento PIX e gostaria de confirmar.\n\nEmail: " . auth()->user()->email
+                    );
+
+                    // Link final
+                    $linkWhatsapp = "https://wa.me/{$whatsapp}?text={$mensagem}";
+                @endphp
+
+
+                <div class="mt-3 text-center">
+
+                    <a href="{{ $linkWhatsapp }}" target="_blank" class="btn btn-success btn-lg">
+
+                        <i class="fab fa-whatsapp"></i>
+                        Enviar comprovante pelo WhatsApp
+
+                    </a>
+
+                </div>
+
             </div>
         </div>
     </div>
