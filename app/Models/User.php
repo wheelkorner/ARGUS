@@ -77,16 +77,16 @@ class User extends Authenticatable
      */
     public function adminlte_image()
     {
-        return 'https://picsum.photos/300/300';
+        return asset('vendor/adminlte/dist/img/AdminLTELogo.png');
     }
 
     public function adminlte_desc()
     {
-        return 'I\'m a nice guy';
+        return $this->email;
     }
 
     public function adminlte_profile_url()
     {
-        return 'profile/username';
+        return route('perfil.show');
     }
 }

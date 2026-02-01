@@ -1,0 +1,65 @@
+/* =========================================
+   APP GUARD - proteção visual / anti-print
+   ========================================= */
+
+/* Bloqueia seleção de texto */
+body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/*
+  Se isso ficar agressivo demais, troque por:
+  body:not(.allow-select) { user-select: none; }
+  e aplique class="allow-select" em páginas que podem copiar texto.
+*/
+
+/* Evita arrastar imagens */
+img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+}
+
+/* Bloqueia impressão */
+@media print {
+
+    html,
+    body {
+        display: none !important;
+        visibility: hidden !important;
+    }
+}
+
+/* Blur ao sair da aba */
+.screen-blur {
+    filter: blur(14px);
+}
+
+/* Watermark */
+#app-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-28deg);
+    font-size: 42px;
+    line-height: 1.25;
+    color: rgba(0, 0, 0, 0.10);
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 999999;
+    padding: 10px 16px;
+    border-radius: 8px;
+
+    /* ✅ ESSENCIAL: começa invisível e aparece quando o JS mandar */
+    opacity: 0;
+    transition: opacity .25s ease-in-out;
+}
+
+/* Dark mode */
+.dark-mode #app-watermark {
+    color: rgba(255, 255, 255, 0.10);
+}

@@ -4,8 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckUserActive
@@ -14,43 +12,48 @@ class CheckUserActive
     {
         $user = $request->user();
 
-        // Se não tiver logado, deixa o "auth" tratar.
+        // Se não estiver logado, deixa o auth resolver
         if (!$user) {
             return $next($request);
         }
 
         $status = $user->status ?? 'pendente';
 
+        /**
+         * =====================================================
+         * USUÁRIO BLOQUEADO
+         * =====================================================
+         * - NÃO desloga
+         * - NÃO mata sessão
+         * - Só permite PIX e logout
+         */
         if ($status === 'bloqueado') {
-            $this->forceLogout($request, (int) $user->id);
-            return redirect()->route('acesso.bloqueado');
+
+            // Rotas liberadas para bloqueado
+            if (
+                $request->is('pix') ||
+                $request->is('logout') ||
+                $request->is('api/*')
+            ) {
+                return $next($request);
+            }
+
+            return redirect()
+                ->route('pix.show')
+                ->with('error', 'Sua conta está bloqueada. Regularize o pagamento.');
         }
 
+        /**
+         * =====================================================
+         * USUÁRIO PENDENTE
+         * =====================================================
+         * - Continua indo para tela de pendente
+         */
         if ($status !== 'ativo') {
-            $this->forceLogout($request, (int) $user->id);
             return redirect()->route('acesso.pendente');
         }
 
+        // Usuário ativo → segue normal
         return $next($request);
-    }
-
-    /**
-     * Logout completo: encerra a sessão atual e remove sessões do usuário.
-     * (Isso protege contra “sessão zumbi” em DB session driver.)
-     */
-    private function forceLogout(Request $request, int $userId): void
-    {
-        try {
-            // Mata todas as sessões do usuário (driver database)
-            DB::table('sessions')->where('user_id', $userId)->delete();
-        } catch (\Throwable $e) {
-            // Se der algum problema, pelo menos desloga a sessão atual.
-        }
-
-        Auth::logout();
-
-        // Invalida a sessão atual e troca token CSRF
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
     }
 }

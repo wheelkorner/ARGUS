@@ -96,7 +96,7 @@ return [
 
     'use_route_url' => false,
     'dashboard_url' => 'home',
-    'logout_url' => 'logout',
+    'logout_url' => 'logout',  // <- rota POST /logout do Auth::routes()
     'login_url' => 'login',
     'register_url' => 'register',
     'password_reset_url' => 'password/reset',
@@ -120,29 +120,44 @@ return [
             'topnav_right' => true,
         ],
 
-        // Sidebar items (ARGUS)
+        // Sidebar items
         ['header' => 'ARGUS'],
+
+        // PIX sempre visível (inclusive bloqueado)
+        [
+            'text' => 'PIX (QR Code)',
+            'url' => 'pix',
+            'icon' => 'fas fa-qrcode',
+        ],
+
+        // A partir daqui: só se NÃO estiver bloqueado
+        [
+            'text' => 'Meu Perfil',
+            'url' => 'perfil',
+            'icon' => 'fas fa-user',
+            'can' => 'argus-nao-bloqueado',
+        ],
 
         [
             'text' => 'Minha Ficha',
             'url' => 'ficha',
             'icon' => 'fas fa-fw fa-id-card',
-            'can' => 'argus-user',
+            'can' => ['argus-user', 'argus-nao-bloqueado'],
         ],
 
         [
             'text' => 'Usuários',
             'url' => 'admin/usuarios',
             'icon' => 'fas fa-fw fa-users',
-            'can' => 'argus-admin',
+            'can' => ['argus-admin', 'argus-nao-bloqueado'],
         ],
 
         ['header' => 'CONTA'],
 
         [
-            'type' => 'logout',
             'text' => 'Sair',
-            'icon' => 'fas fa-fw fa-sign-out-alt',
+            'icon' => 'fas fa-fw fa-power-off',
+            'url' => 'sair',
         ],
     ],
 
@@ -157,74 +172,51 @@ return [
     ],
 
     'plugins' => [
+
+        'AppGuard' => [
+            'active' => false,
+            'files' => [
+                ['type' => 'css', 'asset' => true, 'location' => 'css/app-guard.css'],
+                ['type' => 'js', 'asset' => true, 'location' => 'js/app-guard.js'],
+            ],
+        ],
+
         'Datatables' => [
             'active' => false,
             'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
-                ],
-                [
-                    'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
-                ],
+                ['type' => 'js', 'asset' => false, 'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js'],
+                ['type' => 'js', 'asset' => false, 'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js'],
+                ['type' => 'css', 'asset' => false, 'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css'],
             ],
         ],
+
         'Select2' => [
             'active' => false,
             'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js',
-                ],
-                [
-                    'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css',
-                ],
+                ['type' => 'js', 'asset' => false, 'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'],
+                ['type' => 'css', 'asset' => false, 'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css'],
             ],
         ],
+
         'Chartjs' => [
             'active' => false,
             'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
-                ],
+                ['type' => 'js', 'asset' => false, 'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js'],
             ],
         ],
+
         'Sweetalert2' => [
             'active' => false,
             'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
-                ],
+                ['type' => 'js', 'asset' => false, 'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8'],
             ],
         ],
+
         'Pace' => [
             'active' => false,
             'files' => [
-                [
-                    'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/blue/pace-theme-center-radar.min.css',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js',
-                ],
+                ['type' => 'css', 'asset' => false, 'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/blue/pace-theme-center-radar.min.css'],
+                ['type' => 'js', 'asset' => false, 'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js'],
             ],
         ],
     ],
